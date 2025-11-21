@@ -65,3 +65,23 @@ CUDA 提供自动计算最佳 block 大小的 API：
 
     printf("Recommended block size = %d\n", blockSize);
 ```
+
+## cuda block的线程数和执行速度是如何tradeoff的，是否是线程数越多，执行速度越快？
+- GPU 不是 CPU，它是 SIMT 架构。每个 SM（Streaming Multiprocessor）同时执行 多个 warp（每 warp 32 个线程），block 内线程数决定了一个 block 内 warp 的数量：
+```cpp
+numWarpsPerBlock=⌈threadsPerBlock/32⌉
+```
+SM 资源有限，且每个 SM 能同时挂载的线程数、block 数、register 数、shared memory 都有限。
+
+
+- 小 block 的情况
+    - block 内 warp 数少
+    - 一个 SM 同时可以运行更多 block（因为 SM 资源足够）
+    - 可能导致 warp 数不足，SM 不能充分隐藏内存延迟
+    - GPU 利用率低 → kernel 慢
+
+- 大 block 的情况
+    - 线程数大（比如 512、1024）：
+    - block 内 warp 多 → 每个 block 占用更多 SM 资源（register / shared memory）
+    - 每个 SM 能挂载的 block 数可能减少
+    - 如果 block 太大 → 少 block 挂载 → GPU warp 总数不足 → 仍然可能降低吞吐量

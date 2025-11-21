@@ -46,8 +46,7 @@ __global__ void sumArrayOnGPU(float *A, float *B, float *C, const int N) {
     }
 }
 
-void printDeviceInfo(int dev)
-{
+void printDeviceInfo(int dev){
     cudaDeviceProp prop;
     cudaGetDeviceProperties(&prop, dev);
 
@@ -65,6 +64,12 @@ void printDeviceInfo(int dev)
     printf("  Memory clock rate: %d kHz\n", prop.memoryClockRate);
     printf("  Total global memory: %zu MB\n",
            prop.totalGlobalMem / (1024 * 1024));
+}
+
+double cpu_second(){
+    struct timespec tp;
+    clock_gettime(CLOCK_REALTIME, &tp);
+    return ((double)tp.tv_sec +(double)tp.tv_nsec * 1.e-9);
 }
 
 
@@ -87,7 +92,7 @@ int main()
 
     printf("Recommended block size = %d\n", blockSize);
 
-    int nElem=blockSize;
+    int nElem=1<<24;
     std::cout<<"Vector size: "<< nElem << std::endl;
     size_t nBytes = nElem * sizeof(float);
 
@@ -111,16 +116,23 @@ int main()
     cudaCheck(cudaMemcpy(d_a, h_A, nBytes, cudaMemcpyHostToDevice));
     cudaCheck(cudaMemcpy(d_b, h_B, nBytes, cudaMemcpyHostToDevice));
 
-    dim3 block(nElem);
+    dim3 block(blockSize);
     dim3 grid((nElem + block.x - 1)/ block.x);
 
+    double iStart = cpu_second();
     sumArrayOnGPU<<<grid, block>>>(d_a, d_b, d_c, nElem);
     cudaCheck(cudaGetLastError());
+    cudaCheck(cudaDeviceSynchronize());
+    double iElaps = cpu_second() - iStart;
+    std::cout << "GPU execution time: " << iElaps * 1000.0 << " ms" << std::endl;
 
     cudaCheck(cudaMemcpy(gpuRef, d_c, nBytes, cudaMemcpyDeviceToHost));
 
+    iStart = cpu_second();
     sumArrayOnHost(h_A, h_B, hostRef, nElem);
-
+    iElaps = cpu_second() - iStart;
+    std::cout << "CPU execution time: " << iElaps * 1000.0 << " ms" << std::endl;
+        
     checkResult(hostRef, gpuRef, nElem);
 
     cudaCheck(cudaFree(d_a));
