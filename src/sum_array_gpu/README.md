@@ -13,3 +13,55 @@
 ```
 一般根本不会超。
 - CUDA kernel 的限制不是「线程总数」，而是：限制单个 block 的线程数不能超过硬件上限
+
+## 获取硬件约束的API
+- 最全面cudaGetDeviceProperties()
+一次性获取所有属性
+```cpp
+void printDeviceInfo(int dev)
+{
+    cudaDeviceProp prop;
+    cudaGetDeviceProperties(&prop, dev);
+
+    printf("Device %d: %s\n", dev, prop.name);
+    printf("  Total SMs: %d\n", prop.multiProcessorCount);
+    printf("  Warp size: %d\n", prop.warpSize);
+    printf("  Max threads per block: %d\n", prop.maxThreadsPerBlock);
+    printf("  Max threads dim: (%d %d %d)\n",
+           prop.maxThreadsDim[0], prop.maxThreadsDim[1], prop.maxThreadsDim[2]);
+    printf("  Max grid size: (%d %d %d)\n",
+           prop.maxGridSize[0], prop.maxGridSize[1], prop.maxGridSize[2]);
+    printf("  Shared mem per block: %zu\n", prop.sharedMemPerBlock);
+    printf("  Registers per block: %d\n", prop.regsPerBlock);
+    printf("  Memory bus width: %d bits\n", prop.memoryBusWidth);
+    printf("  Memory clock rate: %d kHz\n", prop.memoryClockRate);
+    printf("  Total global memory: %zu MB\n",
+           prop.totalGlobalMem / (1024 * 1024));
+}
+```
+
+- 更细粒度cudaDeviceGetAttribute()
+| 属性                                   | 含义              |
+| ------------------------------------ | --------------- |
+| `cudaDevAttrMaxThreadsPerBlock`      | 每个 block 的最大线程数 |
+| `cudaDevAttrMaxBlockDimX/Y/Z`        | block 维度最大值     |
+| `cudaDevAttrMaxGridDimX/Y/Z`         | grid 维度最大值      |
+| `cudaDevAttrWarpSize`                | warp 大小         |
+| `cudaDevAttrMaxSharedMemoryPerBlock` | shared memory   |
+| `cudaDevAttrMultiprocessorCount`     | SM 数量           |
+| `cudaDevAttrClockRate`               | SM 时钟           |
+| …                                    | （几乎所有硬件资源）      |
+
+- 最自动化的方式cudaOccupancyMaxPotentialBlockSize()
+CUDA 提供自动计算最佳 block 大小的 API：
+```cpp
+    int minGrid, blockSize;
+    cudaOccupancyMaxPotentialBlockSize(
+        &minGrid,
+        &blockSize,
+        sumArrayOnGPU,
+        0,           // 动态共享内存
+        0);          // 最小块数
+
+    printf("Recommended block size = %d\n", blockSize);
+```
