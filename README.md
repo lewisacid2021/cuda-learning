@@ -15,6 +15,13 @@
     ./run.sh -case hello_world // run hello_world
 ```
 
+- Use perf.sh to run with ncu to generate performance report.
+```
+    cd scripts/
+    ./perf.sh    // run all samples
+    ./perf.sh -case hello_world // run hello_world
+```
+
 - Use clean.sh to clean all build cache and executables.
 ```
     cd scripts/
