@@ -46,25 +46,6 @@ __global__ void sumArrayOnGPU(float *A, float *B, float *C, const int N) {
     }
 }
 
-void printDeviceInfo(int dev){
-    cudaDeviceProp prop;
-    cudaGetDeviceProperties(&prop, dev);
-
-    printf("Device %d: %s\n", dev, prop.name);
-    printf("  Total SMs: %d\n", prop.multiProcessorCount);
-    printf("  Warp size: %d\n", prop.warpSize);
-    printf("  Max threads per block: %d\n", prop.maxThreadsPerBlock);
-    printf("  Max threads dim: (%d %d %d)\n",
-           prop.maxThreadsDim[0], prop.maxThreadsDim[1], prop.maxThreadsDim[2]);
-    printf("  Max grid size: (%d %d %d)\n",
-           prop.maxGridSize[0], prop.maxGridSize[1], prop.maxGridSize[2]);
-    printf("  Shared mem per block: %zu\n", prop.sharedMemPerBlock);
-    printf("  Registers per block: %d\n", prop.regsPerBlock);
-    printf("  Memory bus width: %d bits\n", prop.memoryBusWidth);
-    printf("  Memory clock rate: %d kHz\n", prop.memoryClockRate);
-    printf("  Total global memory: %zu MB\n",
-           prop.totalGlobalMem / (1024 * 1024));
-}
 
 double cpu_second(){
     struct timespec tp;
@@ -80,7 +61,6 @@ int main()
 
     int dev=0;
     cudaSetDevice(dev);
-    printDeviceInfo(dev);
 
     int minGrid, blockSize;
     cudaOccupancyMaxPotentialBlockSize(

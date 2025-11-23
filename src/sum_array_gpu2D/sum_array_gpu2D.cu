@@ -58,26 +58,6 @@ __global__ void sumArrayOnGPU2D(float *A, float *B, float *C, int nx, int ny) {
     }
 }
 
-void printDeviceInfo(int dev){
-    cudaDeviceProp prop;
-    cudaGetDeviceProperties(&prop, dev);
-
-    printf("Device %d: %s\n", dev, prop.name);
-    printf("  Total SMs: %d\n", prop.multiProcessorCount);
-    printf("  Warp size: %d\n", prop.warpSize);
-    printf("  Max threads per block: %d\n", prop.maxThreadsPerBlock);
-    printf("  Max threads dim: (%d %d %d)\n",
-           prop.maxThreadsDim[0], prop.maxThreadsDim[1], prop.maxThreadsDim[2]);
-    printf("  Max grid size: (%d %d %d)\n",
-           prop.maxGridSize[0], prop.maxGridSize[1], prop.maxGridSize[2]);
-    printf("  Shared mem per block: %zu\n", prop.sharedMemPerBlock);
-    printf("  Registers per block: %d\n", prop.regsPerBlock);
-    printf("  Memory bus width: %d bits\n", prop.memoryBusWidth);
-    printf("  Memory clock rate: %d kHz\n", prop.memoryClockRate);
-    printf("  Total global memory: %zu MB\n",
-           prop.totalGlobalMem / (1024 * 1024));
-}
-
 double cpu_second(){
     struct timespec tp;
     clock_gettime(CLOCK_REALTIME, &tp);
@@ -92,7 +72,6 @@ int main()
 
     int dev=0;
     cudaCheck(cudaSetDevice(dev));
-    printDeviceInfo(dev);
 
     int minGrid, blockSize;
     cudaOccupancyMaxPotentialBlockSize(
@@ -130,7 +109,7 @@ int main()
     cudaCheck(cudaMemcpy(d_a, h_A, nBytes, cudaMemcpyHostToDevice));
     cudaCheck(cudaMemcpy(d_b, h_B, nBytes, cudaMemcpyHostToDevice));
 
-    dim3 block(16, 16); // 768 线程/block
+    dim3 block(32, 24); // 768 线程/block
     dim3 grid((nx + block.x - 1)/block.x,
             (ny + block.y - 1)/block.y);
 
