@@ -182,3 +182,9 @@ BW = 9751 \text{ MHz} \times 2 (\text{双倍速}) \times 384/8 = 936 \text{ GB/s
 
 ---
 
+# 在运行时设置设备  
+支持多GPU的系统是很常见的。对于一个有N个GPU的系统,  `nvidia-smi`从0到N―1标记设备ID。使用环境变量  `CUDA_VISIBLE_DEVICES`,就可以在运行时指定所选的GPU且无须更改应用程序。  
+
+设置运行时环境变量`CUDA_VISIBLE_DEVICES=2`。nvidia驱动程序会屏蔽其他GPU,这时设备2作为设备0出现在应用程序中。  
+
+也可以使用`CUDA_VISIBLE_DEVICES`指定多个设备。例如,如果 想测试GPU 2和GPU 3,可以设置`CUDA_VISIBLE_DEVICES=2,3`。然后,在运行时,nvidia驱动程序将只使用ID为2和3的设备,并且会将设备ID分别映射为0和1。
