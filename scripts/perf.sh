@@ -51,9 +51,11 @@ run_ncu () {
 
     # 1. ncu profiling，生成 .ncu-rep
     ncu -f \
+        --set full \
         --export "$rep_file" \
         --print-summary per-gpu \
         "$exe_path" > /dev/null 2>&1
+
     echo "Generated ncu-rep: $rep_file"
 
     # 2. 读取 ncu-rep，生成 CLI summary

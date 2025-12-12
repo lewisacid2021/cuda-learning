@@ -62,12 +62,16 @@ int main()
     cudaCheck(cudaGetDeviceProperties(&deviceProp,dev));
     std::cout<< "Using Device "<<dev<<": "<<deviceProp.name<<std::endl;
 
-    int size=64;
-    int blocksize=64;
-    std::cout<<"Data size: "<<size<<std::endl;
+    int size = 64 * 1024;       // 64K threads
+    int blocksize = 128;        // 128 threads per block
 
-    dim3 block(blocksize,1);
-    dim3 grid((size+block.x-1)/block.x,1);
+    dim3 block(blocksize,1,1);
+    dim3 grid((size + block.x - 1) / block.x, 1, 1);
+
+    std::cout << "Data size: " << size 
+            << ", Blocks: " << grid.x 
+            << ", Threads/block: " << block.x << std::endl;
+
 
     float *d_c;
     cudaCheck(cudaMalloc((float**)&d_c, sizeof(float)*size));

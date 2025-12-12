@@ -160,3 +160,37 @@ GPU 空闲 99% 以上，SM 只执行极少一组 warp。
 ---
 
 
+# 实例
+
+## Branch Efficiency
+
+ncu 统计数据，发现kernel1和kernel2的branch efficiency均为0，分支根本没有真正产生 warp divergence
+
+这可能是ncu 把 if(a)/else(b) 全部编译成 predicated execution！不是 branch！
+
+反汇编出SASS指令之后确认
+
+产生结果后使用谓词寄存器mask掉其他分支的语句，在分支语句较少的时候很容易被优化成这种形式
+
+| 情况                           | warp 内线程行为 | branch efficiency |
+| ---------------------------- | ---------- | ----------------- |
+| 所有线程走同一分支                    | 完全一致       | 100%              |
+| warp 半半分开                    | 50% / 50%  | 50%               |
+| 每个线程都不同                      | 完全不同       | 0%                |
+| 只有 predicated 指令，没有真正 BRA/IF | 没有真实分支     | 0% （profiler）     |
+
+
+## IMC Stall
+
+程序的瓶颈在Immediate Constant Cache (IMC) Stall 超过 70%–85%！
+
+每条指令里的常数（如 100.0f / 200.0f）实际上以 immediate constant 的形式读入 SASS。
+
+当 warp 内每个线程使用不同 immediate 时 → 会序列化。
+
+grid 太小（1 block），occupancy 极低 → 低 latency hiding
+
+```
+Active Warps Per SM ≈ 1
+Achieved Occupancy ≈ 4%
+```
